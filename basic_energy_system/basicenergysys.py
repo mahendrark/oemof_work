@@ -37,11 +37,11 @@ logging.info('Necessary buses for the system created')
 
 gas = Source(label='gas_com', outputs={gasbus: Flow(variable_costs=0.035*1e6)})
 
-pv = Source(label='pv', outouts={elbus: Flow(nominal_value=43, fixed=True, actual_value=data['pv'])})
+pv = Source(label='pv', outputs={elbus: Flow(nominal_value=90, fixed=True, actual_value=data['pv'])})
 
 chp_gas = Transformer(label='chp_gas',
                       inputs={gasbus: Flow()},
-                      outputs={elbus: Flow(nominal_value=40), thbus: Flow(nominal_value=40)},
+                      outputs={elbus: Flow(nominal_value=55), thbus: Flow(nominal_value=55)},
                       conversion_factors={elbus: 0.3, thbus: 0.4})
 
 el_storage = GenericStorage(label='el_storage',
@@ -53,6 +53,7 @@ el_storage = GenericStorage(label='el_storage',
                             max_storage_level=0.9,
                             inflow_conversion_factor=0.9,
                             outflow_conversion_factor=0.9)
+
 """
 COP = np.random.uniform(low=3.0, high=5.0, size=(8760,))
 
@@ -82,7 +83,7 @@ thdemand = Sink(label='thdemand', inputs={thbus: Flow(nominal_value=40, actual_v
 
 excess_el = Sink(label='excess_el', inputs={elbus: Flow()})
 
-shortage_el = Source(label='shortage_el', outputs={elbus: Flow(variable_costs=1e15)})
+shortage_el = Source(label='shortage_el', outputs={elbus: Flow(variable_costs=1e20)})
 
 # Adding all the components to the energy system
 
@@ -104,3 +105,25 @@ params = outputlib.processing.parameter_as_dict(es)
 print(results_meta)
 
 print(results_main[gasbus, chp_gas]['sequences'].head())
+
+
+flows_el = pd.DataFrame(index=date_time_index)
+flows_el['PV'] = results_main[pv, elbus]['sequences']
+flows_el['CHP'] = results_main[chp_gas, elbus]['sequences']
+flows_el['Excess'] = results_main[elbus, excess_el]['sequences']
+flows_el['Shortage'] = results_main[shortage_el, elbus]['sequences']
+flows_el['Total'] = flows_el.sum(axis=1)
+
+flows_el_percentage = pd.DataFrame(index=date_time_index)
+for column in flows_el.columns:
+    if column != 'Total':
+        flows_el_percentage[column] = flows_el[column] / flows_el['Total']
+
+flows_el_percentage.plot.area()
+
+plt.show()
+
+
+es.results['main'] = results_main
+es.results['meta'] = results_meta
+es.results.keys()
