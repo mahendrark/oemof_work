@@ -35,9 +35,9 @@ logging.info('Necessary buses for the system created')
 
 # Now creating the necessary components for the system
 
-gas = Source(label='gas_com', outputs={gasbus: Flow(variable_costs=0.035*1e6)})
+gas = Source(label='gas_com', outputs={gasbus: Flow()})
 
-pv = Source(label='pv', outputs={elbus: Flow(nominal_value=90, fixed=True, actual_value=data['pv'])})
+pv = Source(label='pv', outputs={elbus: Flow(nominal_value=65, fixed=True, actual_value=data['pv'])})
 
 chp_gas = Transformer(label='chp_gas',
                       inputs={gasbus: Flow()},
